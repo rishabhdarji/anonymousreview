@@ -12,12 +12,13 @@ const MessageSchema: Schema<Message> = new Schema({
 
 export interface User extends Document {
   username: string;
-  password: string;
   email: string;
+  password: string;
   verifyCode: string;
   verifyCodeExpires: Date;
   messages: Message[];
   isAcceptingMessages: boolean;
+  isVerified: boolean;
 }
 
 const UserSchema: Schema<User> = new Schema<User>({
@@ -29,6 +30,7 @@ const UserSchema: Schema<User> = new Schema<User>({
     maxlength: 50,
     minlength: 3,
   },
+
   email: {
     type: String,
     required: [true, "Email is required"],
@@ -37,21 +39,26 @@ const UserSchema: Schema<User> = new Schema<User>({
     lowercase: true,
     match: /.+\@.+\..+/,
   },
+
   password: { type: String, required: [true, "Password is required"] },
+
   verifyCode: { type: String, required: [true, "Verify code is required"] },
+
   verifyCodeExpires: {
     type: Date,
     required: [true, "Verify code expire date is required"],
   },
+
   messages: [MessageSchema],
+
   isAcceptingMessages: { type: Boolean, default: true },
+
+  isVerified: { type: Boolean, default: false },
 });
 
-const MessageModel =
-  (mongoose.models.Message as mongoose.Model<Message>) ||
-  mongoose.model<Message>("Message", MessageSchema);
+
 const UserModel =
   (mongoose.models.User as mongoose.Model<User>) ||
   mongoose.model<User>("User", UserSchema);
 
-export { MessageModel, UserModel };
+export default UserModel;
