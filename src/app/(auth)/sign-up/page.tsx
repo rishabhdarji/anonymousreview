@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Link from "next/link";
-import { useDebounceValue } from "usehooks-ts";
+import { useDebounceValue, useDebounceCallback } from "usehooks-ts";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { signUpSchema } from "@/schemas/signUpSchema";
@@ -15,13 +17,15 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button";
 import Lottie from "lottie-react";
 import animationData from './loader.json';
+import { Loader2 } from "lucide-react";
+
 
 const page = () => {
   const [username, setUsername] = useState("");
   const [usernameMessage, setUsernameMessage] = useState("");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const debouncedUsername = useDebounceValue(username, 300);
+  const debounced = useDebounceCallback(setUsername, 300);
   const router = useRouter();
 
   // zod will be implement from here
@@ -36,12 +40,12 @@ const page = () => {
 
   useEffect(() => {
     const checkUsernameUnique = async () => {
-      if (debouncedUsername) {
+      if (username) {
         setIsCheckingUsername(true);
         setUsernameMessage("");
         try {
-          const response = await axios.post(
-            `/api/check-username-unique?username=${debouncedUsername}`
+          const response = await axios.get(
+            `/api/check-username-unique?username=${username}`
           );
           setUsernameMessage(response.data.message);
         } catch (error) {
@@ -55,7 +59,7 @@ const page = () => {
       }
     };
     checkUsernameUnique();
-  }, [debouncedUsername]);
+  }, [username]);
 
   const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
     setIsSubmitting(true);
@@ -67,6 +71,7 @@ const page = () => {
     } catch (error) {
       console.error("Error during sign up:", error);
       const axiosError = error as AxiosError<ApiResponse>;
+      // eslint-disable-next-line prefer-const
       let errorMessage =
         axiosError.response?.data.message || "An error occurred during sign up";
       toast(
@@ -103,13 +108,17 @@ const page = () => {
                   <Input placeholder="username" {...field} 
                     onChange={(e) => {
                       field.onChange(e);
-                      setUsername(e.target.value);
+                      debounced(e.target.value);
                     }}
                     value={username}
                     //You can remove this line.
                     disabled={isCheckingUsername || isSubmitting}
                   />
                   </FormControl>
+                  {isCheckingUsername && <Loader2 className="animate-spin" />}
+                <p className={`text=-sm ${usernameMessage === "Username is available" ? 'text-green-500': 'text-red-500'}`}>
+                  {usernameMessage}
+                </p>
                 </FormItem>
               )}
             />
@@ -143,7 +152,8 @@ const page = () => {
               {
                 isSubmitting ? (
                 <>
-                <Lottie animationData={animationData} loop={true} />Loading...
+                <Loader2 className="animate-spin" />
+                Loading...
                 </>
             ) : ("Sign Up")
               }
