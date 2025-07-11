@@ -5,7 +5,7 @@ import { z } from "zod";
 import Link from "next/link";
 import { useDebounceValue } from "usehooks-ts";
 import { toast } from "sonner";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { signUpSchema } from "@/schemas/signUpSchema";
 import { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
@@ -13,6 +13,8 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button";
+import Lottie from "lottie-react";
+import animationData from './loader.json';
 
 const page = () => {
   const [username, setUsername] = useState("");
@@ -138,10 +140,25 @@ const page = () => {
               )}
             />
           <Button type="submit" disabled={isSubmitting}>
-            Sign Up
+              {
+                isSubmitting ? (
+                <>
+                <Lottie animationData={animationData} loop={true} />Loading...
+                </>
+            ) : ("Sign Up")
+              }
+            
           </Button>
           </form>
         </Form>
+        <div className="mt-4 text-center">
+            <p>
+                Already a member?{" "}
+                <Link href="/sign-in" className="text-blue-600 hover:text-blue-800">
+                    Sign In
+                </Link>
+            </p>
+        </div>
       </div>
     </div>
   );
