@@ -110,9 +110,6 @@ const page = () => {
                       field.onChange(e);
                       debounced(e.target.value);
                     }}
-                    value={username}
-                    //You can remove this line.
-                    disabled={isCheckingUsername || isSubmitting}
                   />
                   </FormControl>
                   {isCheckingUsername && <Loader2 className="animate-spin" />}
