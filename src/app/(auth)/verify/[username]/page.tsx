@@ -66,7 +66,14 @@ function VerifyAccount() {
                 </FormItem>
               )}
             />
-            <button type="submit" className="btn btn-primary w-full">
+            <button
+              type="submit"
+              className="w-full py-2 px-4 rounded-md bg-gradient-to-r from-gray-700 via-gray-900 to-black text-white font-semibold shadow-sm transition-all duration-300
+                hover:from-gray-800 hover:via-black hover:to-gray-900
+                hover:scale-105 hover:shadow-lg
+                focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2
+                active:scale-100"
+            >
               Verify
             </button>
           </form>

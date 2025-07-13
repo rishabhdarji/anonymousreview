@@ -1,6 +1,6 @@
 import z from 'zod';
 
-export const signUpSchema = z.object({
+export const signInSchema = z.object({
     identifier : z
         .string().length(6, { message: 'Identifier must be exactly 6 characters long' })
         .regex(/^[0-9]+$/, { message: 'Identifier must contain only numbers' }),
