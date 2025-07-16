@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import dbConnect from "@/lib/dbConnect";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     }
 } 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 export async function GET(request: Request) {
     await dbConnect();
     const session = await getServerSession(authOptions);
