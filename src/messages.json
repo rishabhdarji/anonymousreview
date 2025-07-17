@@ -1,0 +1,17 @@
+[
+    {
+        "title": "Project Update: Q3 Report",
+        "content": "The quarterly report is now available for review. Please check the attached documents and provide feedback by Friday.",
+        "received": "2023-11-05T09:23:15Z"
+    },
+    {
+        "title": "Meeting Reminder: Team Standup",
+        "content": "This is a reminder that we have our weekly team standup tomorrow at 10:00 AM in the main conference room. Please prepare your status updates.",
+        "received": "2023-11-06T14:30:42Z"
+    },
+    {
+        "title": "New Feature Request",
+        "content": "Client has requested a new dashboard feature that allows filtering by date range. Please add this to the backlog for discussion during sprint planning.",
+        "received": "2023-11-07T11:15:08Z"
+    }
+]
