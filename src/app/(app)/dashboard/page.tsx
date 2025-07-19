@@ -90,7 +90,7 @@ const Page = () => {
     }
    }
 
-  const {username} = session?.user as User;
+  const username = (session?.user as User)?.username;
   
   const baseUrl = `${window.location.protocol}//${window.location.host}`
   const profileUrl = `${baseUrl}/user/${username}`
@@ -113,7 +113,7 @@ const Page = () => {
   return (
     <div className="my-8 mx-4 md:mx-8 lg:mx-auto p-6 bg-white rounded-lg shadow-md max-w-6xl">
       <h1 className="text-4xl font-bold mb-4">
-        Welcome, {session.user.name || session.user.email}!
+        Welcome, {session.user.username || session.user.email}!
       </h1>
       <div className="mb-4">
         <h2 className="text-lg font-semibold mb-2">
@@ -141,7 +141,7 @@ const Page = () => {
         checked={acceptMessages}
         onCheckedChange={handleSwitchChange}
         disabled={isSwitchLoading}
-        className="w-full max-w-xs"
+       
         />
         <span className="ml-2">
           Accept Messages: {acceptMessages ? "Enabled" : "Disabled"}
