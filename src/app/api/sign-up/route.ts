@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User";
 import bcrypt from "bcryptjs";
@@ -8,7 +9,7 @@ export async function POST(request: Request) {
   await dbConnect();
   try {
     const { username, email, password } = await request.json();
-    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
+    
     // Check if the user already exists
     const existingUserVerifiedByUsername = await UserModel.findOne({
       username,
@@ -27,71 +28,43 @@ export async function POST(request: Request) {
     const existingUserVerifiedByEmail = await UserModel.findOne({
       email,
     });
+    let verifyCode = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
 
-    if (existingUserVerifiedByEmail && existingUserVerifiedByEmail.isVerified) {
-      return Response.json(
-        {
-          success: false,
-          message: "Email already exists. Please choose a different email.",
-        },
-        { status: 400 }
-      );
-    } else if (
-      existingUserVerifiedByEmail &&
-      !existingUserVerifiedByEmail.isVerified
-    ) {
-      // Update the existing unverified user
-      const hashedPassword = await bcrypt.hash(password, 10);
-      existingUserVerifiedByEmail.username = username;
-      existingUserVerifiedByEmail.password = hashedPassword;
-      existingUserVerifiedByEmail.verifyCode = verifyCode;
-      existingUserVerifiedByEmail.verifyCodeExpires = new Date(
-        Date.now() + 3600000
-      ); // OTP expires in 1 hour
-      await existingUserVerifiedByEmail.save();
-
-      // Send verification email
-      const emailResponse = await sendVerificationEmail(
-        email,
-        username,
-        verifyCode
-      );
-      if (!emailResponse.success) {
+    if (existingUserVerifiedByEmail) {
+      if (existingUserVerifiedByEmail.isVerified) {
         return Response.json(
           {
             success: false,
-            message: emailResponse.message,
+            message: 'User already exists with this email',
           },
-          { status: 500 }
+          { status: 400 }
         );
-      }
-
-      return Response.json(
-        {
-          success: true,
-          message:
-            "User registered successfully. Please check your email for the verification code.",
-        },
-        { status: 201 }
-      );
-    } else {
-      // Create a new user
-      const verifyCodeExpires = new Date(Date.now() + 3600000); // OTP expires in 1 hour
+      } else {
+      // Update the existing unverified user
       const hashedPassword = await bcrypt.hash(password, 10);
+      existingUserVerifiedByEmail.password = hashedPassword;
+      existingUserVerifiedByEmail.verifyCode = verifyCode;
+      existingUserVerifiedByEmail.verifyCodeExpires = new Date(Date.now() + 3600000); // OTP expires in 1 hour
+      await existingUserVerifiedByEmail.save();
+      }
+    } else {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 1);
 
       const newUser = new UserModel({
         username,
         email,
         password: hashedPassword,
         verifyCode,
-        verifyCodeExpires,
+        verifyCodeExpires: expiryDate,
         isVerified: false,
-        isAcceptingMessages: true, // Default to accepting messages;
-        messages: [], // Initialize with an empty array
+        isAcceptingMessages: true,
+        messages: [],
       });
 
       await newUser.save();
-
+    }
       // Send verification email
       const emailResponse = await sendVerificationEmail(
         email,
@@ -116,10 +89,9 @@ export async function POST(request: Request) {
         },
         { status: 201 }
       );
-    }
-  } catch (error) {
+    } catch (error) {
     console.error(
-      "Error connecting to the database, failed to register user:",
+      "Error registering user:",
       error
     );
     return Response.json(

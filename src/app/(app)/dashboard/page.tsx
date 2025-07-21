@@ -20,10 +20,12 @@ const Page = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchLoading, setIsSwitchLoading] = useState(false);
+  const [profileUrl, setProfileUrl] = useState("");
   const handleDeleteMessage = (messageId: string) => {
     setMessages(messages.filter((message) => message._id !== messageId));
   };
   const { data: session } = useSession();
+  const username = session?.user ? (session.user as User).username : undefined;
   const form = useForm({
     resolver: zodResolver(AcceptMessageSchema),
   });
@@ -32,7 +34,7 @@ const Page = () => {
   const fetchAcceptMessage = useCallback(async () => {
     setIsSwitchLoading(true);
     try {
-      const response = await axios.get("/api/accept-messages");
+      const response = await axios.get<ApiResponse>("/api/accept-messages");
       setValue("acceptMessages", response.data.isAcceptingMessages);
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
@@ -48,7 +50,6 @@ const Page = () => {
   const fetchMessages = useCallback(
     async (refresh: boolean = false) => {
       setIsLoading(true);
-      setIsSwitchLoading(false);
       try {
         const response = await axios.get<ApiResponse>("/api/get-messages");
         setMessages(response.data.messages || []);
@@ -61,15 +62,21 @@ const Page = () => {
         const axiosError = error as AxiosError<ApiResponse>;
         toast.error(
           axiosError.response?.data.message ||
-            "Failed to fetch accept messages status"
+            "Failed to fetch messages"
         );
       } finally {
         setIsLoading(false);
-        setIsSwitchLoading(false);
       }
     },
     [setIsLoading, setMessages]
   );
+
+   useEffect(() => {
+    if (typeof window !== "undefined" && username) {
+      const baseUrl = `${window.location.protocol}//${window.location.host}`;
+      setProfileUrl(`${baseUrl}/user/${username}`);
+    }
+  }, [username]);
 
   useEffect(() => {
     if (!session || !session.user) return;
@@ -77,7 +84,6 @@ const Page = () => {
     fetchAcceptMessage();
   }, [session, setValue, fetchMessages, fetchAcceptMessage]);
 
-  //handle switch change
   const handleSwitchChange = async () => {
     try {
       const response = await axios.post<ApiResponse>("/api/accept-messages", {
@@ -96,16 +102,11 @@ const Page = () => {
     }
   };
 
-  const username = (session?.user as User)?.username;
-
-  const [profileUrl, setProfileUrl] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && username) {
-      const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      setProfileUrl(`${baseUrl}/user/${username}`);
-    }
-  }, [username]);
+  if (!session || !session.user) {
+    return (
+      <div></div>
+    );
+  }
 
   const copyToClipboard = () => {
     if (profileUrl) {
@@ -116,19 +117,19 @@ const Page = () => {
     }
   };
 
-  if (!session || !session.user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#101415] via-[#181f1b] to-[#232b2b]">
-        <div className="bg-black/60 p-8 rounded-xl shadow-xl text-white text-center">
-          Please Login to view your dashboard.
-          <br />
-          <Link href="/sign-in" className="text-green-400 hover:underline">
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // if (!session || !session.user) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#101415] via-[#181f1b] to-[#232b2b]">
+  //       <div className="bg-black/60 p-8 rounded-xl shadow-xl text-white text-center">
+  //         Please Login to view your dashboard.
+  //         <br />
+  //         <Link href="/sign-in" className="text-green-400 hover:underline">
+  //           Sign In
+  //         </Link>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div
@@ -353,7 +354,7 @@ const Page = () => {
       <div className="w-full max-w-6xl z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {messages.length > 0 ? (
-            messages.map((message, index) => (
+            messages.map((message) => (
               <div
                 key={String(message._id)}
                 className="bg-[#181f1b]/80 rounded-2xl shadow-xl p-0 border border-[#222]/60 hover:scale-[1.025] transition-transform duration-200 backdrop-blur-md"
