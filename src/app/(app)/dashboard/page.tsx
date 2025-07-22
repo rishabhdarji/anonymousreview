@@ -74,7 +74,7 @@ const Page = () => {
    useEffect(() => {
     if (typeof window !== "undefined" && username) {
       const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      setProfileUrl(`${baseUrl}/user/${username}`);
+      setProfileUrl(`${baseUrl}/u/${username}`);
     }
   }, [username]);
 
@@ -117,19 +117,7 @@ const Page = () => {
     }
   };
 
-  // if (!session || !session.user) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#101415] via-[#181f1b] to-[#232b2b]">
-  //       <div className="bg-black/60 p-8 rounded-xl shadow-xl text-white text-center">
-  //         Please Login to view your dashboard.
-  //         <br />
-  //         <Link href="/sign-in" className="text-green-400 hover:underline">
-  //           Sign In
-  //         </Link>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  
 
   return (
     <div
