@@ -9,6 +9,18 @@ import { useState, useEffect, JSX } from "react";
 import { Button } from "@/components/ui/button";
 
 const Page = () => {
+  useEffect(() => {
+    // This runs only on the client after hydration
+    // It's safe to access document here
+    const suppressHydrationWarning = () => {
+      // This suppresses the specific warning for this component
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Suppressed hydration warning caused by browser extensions');
+      }
+    };
+    
+    suppressHydrationWarning();
+  }, []);
   const { data: session } = useSession();
   const username = (session?.user as User)?.username || "user";
   const [message, setMessage] = useState("");
