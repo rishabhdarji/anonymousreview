@@ -61,8 +61,7 @@ const Page = () => {
       } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
         toast.error(
-          axiosError.response?.data.message ||
-            "Failed to fetch messages"
+          axiosError.response?.data.message || "Failed to fetch messages"
         );
       } finally {
         setIsLoading(false);
@@ -71,7 +70,7 @@ const Page = () => {
     [setIsLoading, setMessages]
   );
 
-   useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined" && username) {
       const baseUrl = `${window.location.protocol}//${window.location.host}`;
       setProfileUrl(`${baseUrl}/u/${username}`);
@@ -103,9 +102,7 @@ const Page = () => {
   };
 
   if (!session || !session.user) {
-    return (
-      <div></div>
-    );
+    return <div></div>;
   }
 
   const copyToClipboard = () => {
@@ -116,8 +113,6 @@ const Page = () => {
       });
     }
   };
-
-  
 
   return (
     <div
@@ -338,32 +333,92 @@ const Page = () => {
           </Button>
         </div>
       </div>
+      
       {/* Messages grid */}
-      <div className="w-full max-w-6xl z-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {messages.length > 0 ? (
-            messages.map((message) => (
-              <div
-                key={String(message._id)}
-                className="bg-[#181f1b]/80 rounded-2xl shadow-xl p-0 border border-[#222]/60 hover:scale-[1.025] transition-transform duration-200 backdrop-blur-md"
-                style={{
-                  boxShadow: "0 4px 32px 0 #00ff4122, 0 1.5px 8px 0 #0008",
-                }}
-              >
-                <MessageCard
-                  message={message}
-                  onMessageDelete={handleDeleteMessage}
-                />
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center text-gray-400 py-12 text-lg">
-              No messages to display yet.
-              <br />
-              Share your profile link to receive anonymous feedback!
-            </div>
-          )}
+      <div className="w-full max-w-5xl z-10 mt-6">
+        <div className="flex flex-row items-center justify-between mb-6">
+          <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+            Your Messages
+          </h2>
+          <Button
+            className="transition-transform duration-200"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              fetchMessages(true);
+            }}
+            style={{
+              borderColor: "#19c37d",
+              color: "#19c37d",
+              background: "transparent",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#19c37d22")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            {isLoading ? (
+              <Loader2 className="animate-spin h-4 w-4 mr-2" />
+            ) : (
+              <RefreshCcw className="h-4 w-4 mr-2" />
+            )}
+            Refresh
+          </Button>
         </div>
+
+        {messages.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {messages.map((message) => (
+              <MessageCard
+                key={message._id}
+                message={message}
+                onMessageDelete={handleDeleteMessage}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-[#1b211f] rounded-xl border border-[#19c37d]/30">
+            <div className="text-gray-400 mb-4 text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 mx-auto mb-3 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-300 mb-1">No Messages Yet</h3>
+              <p className="text-gray-500">
+                When people send you anonymous messages, they will appear here.
+              </p>
+            </div>
+            <div className="flex flex-row items-center text-sm text-gray-500">
+              <span>Make sure your profile is set to accept messages</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,28 @@ import { useSession } from "next-auth/react";
 import { User } from "next-auth";
 import { useState, useEffect, JSX } from "react";
 import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+import { ApiResponse } from "@/types/ApiResponse";
+import { useCompletion } from "ai/react";
+import { Loader2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+// --- message schema for validation ---
+const messageSchema = z.object({
+  content: z
+    .string()
+    .min(3, "Minimum 3 letters should be written in the text."),
+});
+const specialChar = "||";
+const parseStringMessages = (messageString: string): string[] => {
+  return messageString.split(specialChar);
+};
+const initialMessageString =
+  "What's your favorite movie?||Do you have any pets?||What's your dream job?";
 
 const Page = () => {
   useEffect(() => {
@@ -14,37 +36,88 @@ const Page = () => {
     // It's safe to access document here
     const suppressHydrationWarning = () => {
       // This suppresses the specific warning for this component
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Suppressed hydration warning caused by browser extensions');
+      if (process.env.NODE_ENV !== "production") {
+        console.log(
+          "Suppressed hydration warning caused by browser extensions"
+        );
       }
     };
-    
+
     suppressHydrationWarning();
   }, []);
   const { data: session } = useSession();
   const username = (session?.user as User)?.username || "user";
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const params = useParams<{ username: string }>();
+
+  // --- advanced form logic ---
+  const form = useForm<z.infer<typeof messageSchema>>({
+    resolver: zodResolver(messageSchema),
+    defaultValues: { content: "" },
+  });
+  const message = form.watch("content");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // --- suggested messages logic ---
+  const {
+    complete,
+    completion,
+    isLoading: isSuggestLoading,
+    error: suggestError,
+  } = useCompletion({
+    api: "/api/suggest-messages",
+    initialCompletion: initialMessageString,
+  });
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
-    if (e.target.value.length < 3) {
-      setError("Minimum 3 letters should be written in the text.");
-    } else {
-      setError("");
-    }
+    form.setValue("content", e.target.value);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (message.length < 3) {
-      setError("Minimum 3 letters should be written in the text.");
+      form.setError("content", {
+        type: "manual",
+        message: "Minimum 3 letters should be written in the text.",
+      });
       return;
     }
-    // ...send logic...
+    setIsLoading(true);
+    try {
+      const response = await axios.post<ApiResponse>("/api/send-message", {
+        username: params.username,
+        content: message,
+      });
+      toast.success("Message sent successfully!", {
+        description: "Your anonymous message has been delivered.",
+      });
+      form.reset();
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>;
+      if (axiosError.response?.status === 403) {
+        toast.error("Message not sent", {
+          description: "This user is not currently accepting messages.",
+        });
+      } else {
+        toast.error("Failed to send message", {
+          description:
+            axiosError.response?.data.message ||
+            "An error occurred while sending your message.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSuggestMessages = () => {
-    // ...suggest messages logic...
+  const handleSuggestMessages = async () => {
+    try {
+      await complete("");
+    } catch (error) {
+      toast.error("Failed to fetch message suggestions");
+    }
+  };
+
+  const handleMessageClick = (msg: string) => {
+    form.setValue("content", msg);
   };
 
   return (
@@ -245,14 +318,15 @@ const Page = () => {
                 onChange={handleTextareaChange}
                 className="w-full min-h-[100px] rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:ring-2 focus:ring-purple-500 transition"
               />
-              {error && (
+              {form.formState.errors.content && (
                 <div className="text-red-400 text-sm mt-2 text-center">
-                  {error}
+                  {form.formState.errors.content.message}
                 </div>
               )}
               <div className="flex justify-center mt-4">
                 <Button
                   onClick={handleSend}
+                  disabled={isLoading}
                   className="custom-send-btn text-gray-900 font-semibold transition-transform duration-200"
                   style={{ backgroundColor: "#f1f1deff", color: "#222" }}
                   onMouseEnter={(e) =>
@@ -262,12 +336,20 @@ const Page = () => {
                     (e.currentTarget.style.backgroundColor = "#f5f5dc")
                   }
                 >
-                  Send
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send"
+                  )}
                 </Button>
               </div>
               <div className="flex justify-center mt-4">
                 <Button
                   onClick={handleSuggestMessages}
+                  disabled={isSuggestLoading}
                   className="custom-send-btn text-gray-900 font-semibold transition-transform duration-200"
                   style={{ backgroundColor: "#f1f1deff", color: "#222" }}
                   onMouseEnter={(e) =>
@@ -277,12 +359,46 @@ const Page = () => {
                     (e.currentTarget.style.backgroundColor = "#f5f5dc")
                   }
                 >
-                  Suggest Messages
+                  {isSuggestLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading suggestions...
+                    </>
+                  ) : (
+                    "Suggest Messages"
+                  )}
                 </Button>
               </div>
               <div className="text-center text-gray-300 text-sm mt-3">
                 Click on any message below to select it.
               </div>
+              {/* --- suggested messages UI --- */}
+              {completion && (
+                <div className="mt-6 p-4 rounded-lg bg-gray-800/50 border border-gray-700">
+                  <h3 className="text-lg font-medium text-gray-200 mb-3">
+                    Suggested Messages
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {parseStringMessages(completion).map(
+                      (suggestedMsg, idx) => (
+                        <Button
+                          key={idx}
+                          variant="outline"
+                          className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
+                          onClick={() => handleMessageClick(suggestedMsg)}
+                        >
+                          {suggestedMsg}
+                        </Button>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+              {suggestError && (
+                <div className="text-red-400 text-sm mt-4 text-center">
+                  Failed to load suggestions. Please try again.
+                </div>
+              )}
             </div>
           </div>
         </main>
