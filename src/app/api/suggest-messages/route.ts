@@ -1,38 +1,59 @@
-import OpenAI from 'openai';
-import { OpenAIStream, StreamingTextResponse } from 'ai';
+// app/api/suggest-messages/route.ts
+
 import { NextResponse } from 'next/server';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const runtime = 'nodejs'; // Required to call localhost from Next.js API
 
-export const runtime = 'edge';
+export async function POST() {
+  const prompt = `Create a list of three open-ended and engaging questions formatted as a single string. Each question should be separated by '||'. These questions are for an anonymous social messaging platform, like Qooh.me, and should be suitable for a diverse audience.`;
 
-export async function POST(req: Request) {
   try {
-    const prompt =
-      "Create a list of three open-ended and engaging questions formatted as a single string. Each question should be separated by '||'. These questions are for an anonymous social messaging platform, like Qooh.me, and should be suitable for a diverse audience. Avoid personal or sensitive topics, focusing instead on universal themes that encourage friendly interaction. For example, your output should be structured like this: 'What’s a hobby you’ve recently started?||If you could have dinner with any historical figure, who would it be?||What’s a simple thing that makes you happy?'. Ensure the questions are intriguing, foster curiosity, and contribute to a positive and welcoming conversational environment.";
-
-    const response = await openai.completions.create({
-      model: 'gpt-3.5-turbo-instruct',
-      max_tokens: 400,
-      stream: true,
-      prompt,
+    const res = await fetch('http://localhost:11434/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        model: 'llama2',
+        prompt,
+        stream: false,
+      }),
     });
+    
+    const data = await res.json();
+    console.log('Ollama raw response:', data);
 
-    const stream = OpenAIStream(response);
-    
-    
-    return new StreamingTextResponse(stream);
-  } catch (error) {
-    if (error instanceof OpenAI.APIError) {
-      // OpenAI API error handling
-      const { name, status, headers, message } = error;
-      return NextResponse.json({ name, status, headers, message }, { status });
+    // Remove code fences and explanation text
+    let text = data.response ?? '';
+    const match = text.match(/```([\s\S]*?)```/);
+    if (match) {
+      text = match[1].trim();
     } else {
-      // General error handling
-      console.error('An unexpected error occurred:', error);
-      throw error;
+      // Find all lines containing '||'
+      const lines = text.split('\n').map(l => l.trim());
+      const questionLines = lines.filter(line => line.includes('||'));
+      if (questionLines.length) {
+        text = questionLines.join(' ');
+      } else {
+        // Fallback: find the last non-empty line
+        text = lines.reverse().find(line => line.length > 0) ?? '';
+      }
     }
+
+    // Now split into questions
+    // Remove wrapping quotes if present
+    if (text.startsWith('"') && text.endsWith('"')) {
+      text = text.slice(1, -1);
+    }
+    const questions = text.split('||').map((q: string) => q.trim()).filter(Boolean);
+
+    // If no valid questions, return error
+    if (!questions.length) {
+      return NextResponse.json({ error: 'No valid suggestions generated.' }, { status: 500 });
+    }
+
+    // Return as expected by useCompletion
+    return NextResponse.json({ text: questions.join('||') });
+  } catch (error) {
+    console.error('Ollama API Error:', error);
+    return NextResponse.json({ error: 'Failed to connect to Ollama' }, { status: 500 });
   }
 }

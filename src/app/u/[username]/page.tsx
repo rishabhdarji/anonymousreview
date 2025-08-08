@@ -25,7 +25,17 @@ const messageSchema = z.object({
 });
 const specialChar = "||";
 const parseStringMessages = (messageString: string): string[] => {
-  return messageString.split(specialChar);
+  return messageString
+    .split(specialChar)
+    .map((msg) => {
+      // Remove wrapping quotes if present
+      msg = msg.trim();
+      if (msg.startsWith('"') && msg.endsWith('"')) {
+        msg = msg.slice(1, -1).trim();
+      }
+      return msg;
+    })
+    .filter(Boolean);
 };
 const initialMessageString =
   "What's your favorite movie?||Do you have any pets?||What's your dream job?";
@@ -110,7 +120,10 @@ const Page = () => {
 
   const handleSuggestMessages = async () => {
     try {
-      await complete("");
+      await complete(""); // Trigger the API call
+      if (completion) {
+        toast.success("Suggestions loaded successfully!");
+      }
     } catch (error) {
       toast.error("Failed to fetch message suggestions");
     }
@@ -119,6 +132,10 @@ const Page = () => {
   const handleMessageClick = (msg: string) => {
     form.setValue("content", msg);
   };
+
+  useEffect(() => {
+    console.log("Completion value:", completion);
+  }, [completion]);
 
   return (
     <>
