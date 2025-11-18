@@ -1,0 +1,55 @@
+Here are all four, written in the style you want.
+
+README
+Project overview
+This platform lets you receive anonymous feedback through a public link. You manage your messages in a private dashboard. You verify your account through a code sent to your email before you sign in.
+
+Features
+• Account creation with email verification.
+• Public profile at /u/username.
+• Anonymous message submissions.
+• Local LLM suggestions using Ollama.
+• Dashboard with message list, delete action, and accept toggle.
+• Dark themed interface with custom effects.
+• Username availability checks.
+• Strong validation with Zod.
+
+Tech stack
+• Next.js 15 and TypeScript.
+• NextAuth with JWT.
+• MongoDB and Mongoose.
+• Resend for email.
+• Zod and react hook form.
+• Tailwind and Radix.
+• Ollama for local model inference.
+
+How it works
+• User signs up. System sends a six digit code.
+• User verifies the code and proceeds to sign in.
+• Dashboard shows profile link, toggle switch, and messages.
+• Public page lets visitors send feedback.
+• System stores messages in the user record.
+• Ollama route produces three question suggestions separated by double pipes.
+
+Folder structure
+• app for routes.
+• api for server actions.
+• components for UI kit.
+• model for Mongoose schemas.
+• lib for helpers.
+• public for images and effects.
+
+---
+
+Portfolio description
+You built a full stack anonymous feedback platform. Users create accounts and verify them through a six digit code. Each profile gets a public link where others send messages. You built strong validation, secure authentication, and a private dashboard for managing messages. You integrated a local large language model through Ollama to generate suggested questions for visitors. The system handles username checks, password rules, message deletion, and message acceptance state. The interface uses a dark theme with custom visuals.
+
+---
+
+Recruiter summary
+Full stack project using Next.js, TypeScript, MongoDB, and NextAuth. Users create verified accounts and receive anonymous feedback through a public link. System includes email based OTP verification, message storage, message deletion, and acceptance controls. Integrated a local LLM through Ollama for suggested prompts. Built custom UI components and validation across all flows.
+
+---
+
+GitHub overview
+Anonymous feedback platform with email verification and public profile links. Features include message submission, dashboard controls, message deletion, and an acceptance toggle. Uses a local LLM through Ollama for suggestions. Built with Next.js 15, TypeScript, NextAuth, MongoDB, Mongoose, Resend, Zod, Tailwind, and Radix.
