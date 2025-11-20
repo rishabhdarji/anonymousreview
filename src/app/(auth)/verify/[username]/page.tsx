@@ -20,7 +20,7 @@ import * as z from "zod";
 function VerifyAccount() {
   const route = useRouter();
   const param = useParams<{ username: string }>();
-  const [verified, setVerified] = useState(false); // <-- NEW STATE
+  const [verified, setVerified] = useState(false);
 
   const form = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
@@ -37,7 +37,7 @@ function VerifyAccount() {
       });
 
       toast.success(`Verification successful: ${response.data.message}`);
-      setVerified(true); // <-- SET VERIFIED
+      setVerified(true);
     } catch (error) {
       console.error("Verification failed:", error);
       const errMsg =
@@ -47,7 +47,6 @@ function VerifyAccount() {
         typeof (error as any).response?.data?.message === "string"
           ? (error as any).response.data.message
           : "An error occurred";
-      // Show 'invalid code' toast if the error message indicates invalid code
       if (
         typeof error === "object" &&
         error !== null &&

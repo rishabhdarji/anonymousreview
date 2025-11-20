@@ -9,7 +9,7 @@ import { authOptions } from '../../auth/[...nextauth]/options';
 
 export async function DELETE(
   request: Request,
-  context: { params: { messageid: string } }
+  context: { params: Promise<{ messageid: string }> }
 ) {
   // Await the params before accessing
   const { messageid } = await context.params;
