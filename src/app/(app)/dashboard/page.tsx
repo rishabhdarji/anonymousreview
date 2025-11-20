@@ -372,7 +372,7 @@ const Page = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {messages.map((message) => (
               <MessageCard
-                key={message._id}
+                key={message._id as string}
                 message={message}
                 onMessageDelete={handleDeleteMessage}
               />
