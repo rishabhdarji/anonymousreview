@@ -11,7 +11,6 @@ import { useParams } from "next/navigation";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { ApiResponse } from "@/types/ApiResponse";
-import { useCompletion } from "ai/react";
 import { Loader2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -66,17 +65,13 @@ const Page = () => {
   });
   const message = form.watch("content");
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(initialMessageString);
+  const [isSuggestLoading, setIsSuggestLoading] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   // --- suggested messages logic ---
-  const {
-    complete,
-    completion,
-    isLoading: isSuggestLoading,
-    error: suggestError,
-  } = useCompletion({
-    api: "/api/suggest-messages",
-    initialCompletion: initialMessageString,
-  });
+  const completion = suggestions;
+  const showSuggestError = Boolean(suggestError);
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     form.setValue("content", e.target.value);
@@ -119,13 +114,24 @@ const Page = () => {
   };
 
   const handleSuggestMessages = async () => {
+    setIsSuggestLoading(true);
+    setSuggestError(null);
     try {
-      await complete(""); // Trigger the API call
-      if (completion) {
-        toast.success("Suggestions loaded successfully!");
-      }
+      const response = await fetch("/api/suggest-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+      if (!response.ok) throw new Error("Request failed");
+      const data = await response.json();
+      if (!data?.completion) throw new Error("Empty completion");
+      setSuggestions(data.completion);
+      toast.success("Suggestions loaded successfully!");
     } catch (error) {
+      setSuggestError("Failed to load suggestions. Please try again.");
       toast.error("Failed to fetch message suggestions");
+    } finally {
+      setIsSuggestLoading(false);
     }
   };
 
@@ -334,6 +340,7 @@ const Page = () => {
                 value={message}
                 onChange={handleTextareaChange}
                 className="w-full min-h-[100px] rounded-lg border border-gray-600 bg-gray-800 text-gray-100 focus:ring-2 focus:ring-purple-500 transition"
+                suppressHydrationWarning
               />
               {form.formState.errors.content && (
                 <div className="text-red-400 text-sm mt-2 text-center">
@@ -395,13 +402,13 @@ const Page = () => {
                   <h3 className="text-lg font-medium text-gray-200 mb-3">
                     Suggested Messages
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {parseStringMessages(completion).map(
                       (suggestedMsg, idx) => (
                         <Button
                           key={idx}
                           variant="outline"
-                          className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600"
+                          className="bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600 text-left whitespace-normal break-words justify-start h-auto"
                           onClick={() => handleMessageClick(suggestedMsg)}
                         >
                           {suggestedMsg}
@@ -411,9 +418,9 @@ const Page = () => {
                   </div>
                 </div>
               )}
-              {suggestError && (
+              {showSuggestError && (
                 <div className="text-red-400 text-sm mt-4 text-center">
-                  Failed to load suggestions. Please try again.
+                  {suggestError}
                 </div>
               )}
             </div>
